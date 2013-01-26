@@ -1,8 +1,9 @@
 import json
 import Levenshtein
+import unicodedata
 
-CRAIGSLIST_SCRAPED_FILEPATH = "C:\\Users\\ssiby\\Documents\\GitHub\\massive-octo-ironman\\Prycel\\data_sets\\scraped\\craigslist_TO_scraped.json"
-SMARTPHONE_SCRAPED_FILEPATH = "C:\\Users\\ssiby\\Documents\\GitHub\\massive-octo-ironman\\Prycel\\data_sets\\scraped\\sar_scraped.json"
+CRAIGSLIST_SCRAPED_FILEPATH = "/Users/z/massive-octo-ironman/Prycel/data_sets/scraped/craigslist_TO_scraped.json"
+SMARTPHONE_SCRAPED_FILEPATH = "/Users/z/massive-octo-ironman/Prycel/data_sets/scraped/sar_scraped.json"
 
 def loadJSONData(filepath):
 	jsonFile = open(filepath).read()
@@ -23,7 +24,7 @@ def getPhoneDb(phoneData):
 			brand = phoneItem['brand'][0]
 			tempBrand = brand.split('-')[0].strip()
 			devices = phoneItem['device']
-			deviceList = [deviceItem.replace(u'\xa0', u' ') for deviceItem in devices if tempBrand in deviceItem]	
+			deviceList = [deviceItem for deviceItem in devices if tempBrand in deviceItem]	
 			deviceList = [deviceItem.replace(tempBrand,'').strip() for deviceItem in deviceList]
 			phoneDb[tempBrand] = deviceList
 			
@@ -70,11 +71,11 @@ def parsePost(post, phone, phoneDb):
 	# First lets get device and brand
 	topBrand = "Unknown"
 	topDevice = "Unknown"
-	currBest = 0
-	for brand in phoneDb:
-		for device in phoneDb:
-			for word in post['title']:
-				thisRatio = ratio(word, device)
+	currBest = -1
+	for brand in phoneDb.iterkeys():
+		for device in phoneDb[brand]:
+			for word in post['title'].split():
+				thisRatio = Levenshtein.ratio(str(word), str(device))
 				if thisRatio > currBest:
 					currBest = thisRatio
 					topBrand = brand
@@ -126,11 +127,16 @@ def main():
 		print "Phone #"+str(i)
 		print "Brand: " + allPhones[i]['brand']
 		print "Device: " + allPhones[i]['device']
-		print "Unlocked? " + allPhones[i]['unlocked']
-		print "Refurbished? " + allPhones[i]['refurbished']
-		print "New? " + allPhones[i]['new']
-		print "Description"
-		print allPhones[i]['description']
+		print "Unlocked? " + str(allPhones[i]['unlocked'])
+		print "Refurbished? " + str(allPhones[i]['refurbished'])
+		print "New? " + str(allPhones[i]['new'])
+		print ""
+		print craigDb[i]['title']
+		print "---"
+		decodedStr = allPhones[i]['description'].encode("ascii", "ignore")
+		print decodedStr
+		#print "Description"
+		#print allPhones[i]['description']
 		print "\n"
 	
 if __name__ == "__main__":
