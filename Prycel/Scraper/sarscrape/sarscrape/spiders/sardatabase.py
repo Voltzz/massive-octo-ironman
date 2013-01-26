@@ -9,7 +9,7 @@ class SardatabaseSpider(CrawlSpider):
     start_urls = ['http://www.sardatabase.com/']
 
     rules = (
-        Rule(SgmlLinkExtractor(allow=r'/(w|w-w)'), callback='parse_item', follow=True),
+        Rule(SgmlLinkExtractor(allow=r'/(w|w-w)', deny=r'/de'), callback='parse_item', follow=True),
     )
 
     def parse_item(self, response):
