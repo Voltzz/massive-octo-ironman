@@ -1,8 +1,8 @@
 import json
 import Levenshtein
 
-CRAIGSLIST_SCRAPED_FILEPATH = "/Users/z/Prycel/data_sets/scraped/craigslist_TO_scraped.json")
-SMARTPHONE_SCRAPED_FILEPATH = "/Users/z/Prycel/data_sets/scraped/sardb_scraped.json")
+CRAIGSLIST_SCRAPED_FILEPATH = "C:\\Users\\ssiby\\Documents\\GitHub\\massive-octo-ironman\\Prycel\\data_sets\\scraped\\craigslist_TO_scraped.json"
+SMARTPHONE_SCRAPED_FILEPATH = "C:\\Users\\ssiby\\Documents\\GitHub\\massive-octo-ironman\\Prycel\\data_sets\\scraped\\sar_scraped.json"
 
 def loadJSONData(filepath):
 	jsonFile = open(filepath).read()
@@ -14,7 +14,22 @@ def getPhoneDb(phoneData):
 	# Takes as input the raw JSON file
 	# Output needs to be a dictionary with all phone brand/device filled
 	# E.g. phoneDb["Apple"] = ["iPhone", "iPhone 2", "iPhone 3G", "iPhone 3GS" ... ]
-	pass
+	
+	phoneDb = dict()
+
+	for i,phoneItem in enumerate(phoneData):
+
+		if (i ==1) or (i > 3 and i < 15):
+			brand = phoneItem['brand'][0]
+			tempBrand = brand.split('-')[0].strip()
+			devices = phoneItem['device']
+			deviceList = [deviceItem.replace(u'\xa0', u' ') for deviceItem in devices if tempBrand in deviceItem]	
+			deviceList = [deviceItem.replace(tempBrand,'').strip() for deviceItem in deviceList]
+			phoneDb[tempBrand] = deviceList
+			
+	return phoneDb
+
+
 
 def getCraigDb(craigData):
 	# Takes as input the raw JSON file
@@ -22,7 +37,20 @@ def getCraigDb(craigData):
 	# E.g. craigDb[0] corresponds to the first posting
 	# craigDb[0]["title"] = "SELLING COOL PHONE!!!"
 	# craigDb[0]["desc"] = "OMG i love this phone but dont want it\nSo please keep it love you thx"
-	pass
+
+	craigDb = [dict() for x in range(len(craigData))]
+	for i,craigItem in enumerate(craigData):
+		title = craigItem["title"][0]
+		desc = ''	
+		rawDesc = craigItem["desc"]
+
+		for d in rawDesc:
+			desc = desc + d
+
+		craigDb[i]["title"] = title
+		craigDb[i]['desc'] = desc
+
+	return craigDb
 
 
 def parsePost(post, phone, phoneDb):
@@ -105,6 +133,5 @@ def main():
 		print allPhones[i]['description']
 		print "\n"
 	
-
 if __name__ == "__main__":
 	main()
