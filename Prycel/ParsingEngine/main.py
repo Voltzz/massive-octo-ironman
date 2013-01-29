@@ -1,7 +1,10 @@
 import json
+import Levenshtein
+import unicodedata
 
-CRAIGSLIST_SCRAPED_FILEPATH = "C:\\Users\\ssiby\\Documents\\GitHub\\massive-octo-ironman\\Prycel\\data_sets\\scraped\\craigslist_TO_scraped.json"
-SMARTPHONE_SCRAPED_FILEPATH = "C:\\Users\\ssiby\\Documents\\GitHub\\massive-octo-ironman\\Prycel\\data_sets\\scraped\\sar_scraped.json"
+CRAIGSLIST_SCRAPED_FILEPATH = "/Users/z/massive-octo-ironman/Prycel/data_sets/scraped/craigslist_TO_scraped.json"
+SMARTPHONE_SCRAPED_FILEPATH = "/Users/z/massive-octo-ironman/Prycel/data_sets/scraped/sar_scraped.json"
+
 
 def loadJSONData(filepath):
 	jsonFile = open(filepath).read()
@@ -22,7 +25,7 @@ def getPhoneDb(phoneData):
 			brand = phoneItem['brand'][0]
 			tempBrand = brand.split('-')[0].strip()
 			devices = phoneItem['device']
-			deviceList = [deviceItem.replace(u'\xa0', u' ') for deviceItem in devices if tempBrand in deviceItem]	
+			deviceList = [deviceItem for deviceItem in devices if tempBrand in deviceItem]	
 			deviceList = [deviceItem.replace(tempBrand,'').strip() for deviceItem in deviceList]
 			phoneDb[tempBrand] = deviceList
 			
@@ -51,13 +54,51 @@ def getCraigDb(craigData):
 
 	return craigDb
 
-def parsePost(post, phone):
-	# Takes as input a craigDb[i] post and a blank phone dictionary
+
+def parsePost(post, phone, phoneDb):
+	# Takes as input a craigDb[i] post and a blank phone object, and the phone database
 	# No output, but the phone field should be filled in with values
 	# e.g. phone['brand'], phone['device'] etc. should all be filled in
-	pass
 
-'''
+	# Initial Values
+	phone['brand'] = "Unknown"
+	phone['device'] = "Unknown"
+	phone['unlocked'] = False
+	phone['refurbished'] = False
+	phone['new'] = False
+	phone['description'] = "UNDEFINED"
+	phone['price'] = -1
+
+	# First lets get device and brand
+	topBrand = "Unknown"
+	topDevice = "Unknown"
+	currBest = -1
+	for brand in phoneDb.iterkeys():
+		for device in phoneDb[brand]:
+			for word in post['title'].split():
+				thisRatio = Levenshtein.ratio(str(word), str(device))
+				if thisRatio > currBest:
+					currBest = thisRatio
+					topBrand = brand
+					topDevice = device
+	phone['brand'] = topBrand
+	phone['device'] = topDevice
+
+	#Unlocked?
+	if post['desc'].lower().find('unlocked') != -1:
+		phone['unlocked'] = True
+	
+	#New?
+	if post['desc'].lower().find('new') != -1:
+		phone['new'] = True
+	
+	#Refurb?
+	if post['desc'].lower().find('refurb') != -1 or post['desc'].lower().find('refurbished') != -1:
+		phone['refurbished'] = True
+	
+	phone['description'] = post['desc']
+
+
 def main():
 	craigData = loadJSONData(CRAIGSLIST_SCRAPED_FILEPATH)
 	phoneData = loadJSONData(SMARTPHONE_SCRAPED_FILEPATH)
@@ -73,24 +114,31 @@ def main():
 	# Refurbished (Bool)
 	# New (Bool)
 	# Description (String)
+	# Price (Integer)
 	allPhones = list()
 
-	for i in range(0, len(craigData)):
+	for i in range(0, len(craigDb)):
 		thisPhone = dict()
 
-		
+		parsePost(craigDb[i], thisPhone, phoneDb)
 
 		allPhones.append(thisPhone)
 	
-'''
-def main():
-
-	craigData = loadJSONData(CRAIGSLIST_SCRAPED_FILEPATH)
-	phoneData = loadJSONData(SMARTPHONE_SCRAPED_FILEPATH)
-	#craigDB = getCraigDb(craigData)
-	phoneDb = getPhoneDb(phoneData)
-	print str(phoneDb['Samsung'])
-	#getPhoneDb(phoneData)
+	for i in range(0, len(allPhones)):
+		print "Phone #"+str(i)
+		print "Brand: " + allPhones[i]['brand']
+		print "Device: " + allPhones[i]['device']
+		print "Unlocked? " + str(allPhones[i]['unlocked'])
+		print "Refurbished? " + str(allPhones[i]['refurbished'])
+		print "New? " + str(allPhones[i]['new'])
+		print ""
+		print craigDb[i]['title']
+		print "---"
+		decodedStr = allPhones[i]['description'].encode("ascii", "ignore")
+		print decodedStr
+		#print "Description"
+		#print allPhones[i]['description']
+		print "\n"
 	
 if __name__ == "__main__":
 	main()
