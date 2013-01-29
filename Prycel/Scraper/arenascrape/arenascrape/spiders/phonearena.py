@@ -17,5 +17,5 @@ class PhonearenaSpider(CrawlSpider):
         hxs = HtmlXPathSelector(response)
         i = ArenascrapeItem()
 	i['brand'] = hxs.select('//h1/text()').extract()
-	i['device'] = hxs.select('//div[@class="s_listing"]/h3/text()').extract()
+	i['device'] = hxs.select('//div[@class="s_listing"]/div/div/h3/a/text()').extract()
         return i
