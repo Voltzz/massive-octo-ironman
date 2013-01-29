@@ -57,7 +57,7 @@ def parsePost(post, phone):
 	# e.g. phone['brand'], phone['device'] etc. should all be filled in
 	pass
 
-
+'''
 def main():
 	craigData = loadJSONData(CRAIGSLIST_SCRAPED_FILEPATH)
 	phoneData = loadJSONData(SMARTPHONE_SCRAPED_FILEPATH)
@@ -89,8 +89,8 @@ def main():
 	phoneData = loadJSONData(SMARTPHONE_SCRAPED_FILEPATH)
 	#craigDB = getCraigDb(craigData)
 	phoneDb = getPhoneDb(phoneData)
-	print str(phoneDb['Apple'])
+	print str(phoneDb['Samsung'])
 	#getPhoneDb(phoneData)
-'''
+	
 if __name__ == "__main__":
 	main()
