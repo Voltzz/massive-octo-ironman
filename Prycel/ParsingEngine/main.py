@@ -2,8 +2,8 @@ import json
 import Levenshtein
 import unicodedata
 
-CRAIGSLIST_SCRAPED_FILEPATH = "/Users/z/massive-octo-ironman/Prycel/data_sets/scraped/craigslist_TO_scraped.json"
-SMARTPHONE_SCRAPED_FILEPATH = "/Users/z/massive-octo-ironman/Prycel/data_sets/scraped/sar_scraped.json"
+CRAIGSLIST_SCRAPED_FILEPATH = "C:\\Users\\ssiby\\Documents\\GitHub\\massive-octo-ironman\\Prycel\\data_sets\\scraped\\craigslist_TO_scraped"
+SMARTPHONE_SCRAPED_FILEPATH = "C:\\Users\\ssiby\\Documents\\GitHub\\massive-octo-ironman\\Prycel\\data_sets\\scraped\\arena_scraped.json"
 
 
 def loadJSONData(filepath):
@@ -12,24 +12,25 @@ def loadJSONData(filepath):
 
 	return jsonData
 
+
 def getPhoneDb(phoneData):
 	# Takes as input the raw JSON file
 	# Output needs to be a dictionary with all phone brand/device filled
 	# E.g. phoneDb["Apple"] = ["iPhone", "iPhone 2", "iPhone 3G", "iPhone 3GS" ... ]
-	
 	phoneDb = dict()
 
-	for i,phoneItem in enumerate(phoneData):
+	for i, phoneItem in enumerate(phoneData):
+		deviceList = phoneItem['device']
+		if deviceList:
+			brand = phoneItem['brand'][0].strip()
+			brand = str(brand.replace('phones','').strip())
+			if brand in phoneDb:
+				phoneDb[brand] = phoneDb[brand] + deviceList
+			else:
+				phoneDb[brand] = deviceList
 
-		if (i ==1) or (i > 3 and i < 15):
-			brand = phoneItem['brand'][0]
-			tempBrand = brand.split('-')[0].strip()
-			devices = phoneItem['device']
-			deviceList = [deviceItem for deviceItem in devices if tempBrand in deviceItem]	
-			deviceList = [deviceItem.replace(tempBrand,'').strip() for deviceItem in deviceList]
-			phoneDb[tempBrand] = deviceList
-			
 	return phoneDb
+
 
 
 
@@ -139,6 +140,8 @@ def main():
 		#print "Description"
 		#print allPhones[i]['description']
 		print "\n"
-	
+
+
+
 if __name__ == "__main__":
 	main()
