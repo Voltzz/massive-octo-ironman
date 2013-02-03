@@ -2,6 +2,7 @@ import json
 import Levenshtein
 import unicodedata
 import os
+import pymongo
 from util import loadJSONData
 
 # TODO: Fix this latent bug...
@@ -12,19 +13,19 @@ CRAIGSLIST_SCRAPED_FILEPATH = os.path.join(APPL_ROOT,"data_sets","scraped","crai
 
 def getCraigDb(craigData):
 	# Takes as input the raw JSON file
-	# Output needs to be a ilst of dictionaries
+	# Output needs to be a list of dictionaries
 	# E.g. craigDb[0] corresponds to the first posting
 	# craigDb[0]["title"] = "SELLING COOL PHONE!!!"
 	# craigDb[0]["desc"] = "OMG i love this phone but dont want it\nSo please keep it love you thx"
 
 	craigDb = [dict() for x in range(len(craigData))]
 	for i,craigItem in enumerate(craigData):
-		title = craigItem["title"][0]
+		title = craigItem["title"][0].decode("utf-8")
 		desc = ''	
 		rawDesc = craigItem["desc"]
 
 		for d in rawDesc:
-			desc = desc + d
+			desc = desc + d.encode("ascii", errors="ignore")
 
 		craigDb[i]["title"] = title
 		craigDb[i]['desc'] = desc
@@ -32,13 +33,37 @@ def getCraigDb(craigData):
 	return craigDb
 
 
-def parsePost(post, phone, phoneDb):
+def getManufacturers(device, phoneDb):
+	# Returns a list of manufacturers for given device
+	manufacturers = list()
+
+	for phone in phoneDb:
+		if phone['device'] == device:
+			manufacturers.append(phone['manufacturer'])
+	
+	return manufacturers
+
+def pickBestManufacturer(ratios, listOfPossibleManufacturers):
+	bestRatio = -1
+	bestPick = 0
+	for i in range(0, len(listOfPossibleManufacturers)):
+		ratio = ratios[listOfPossibleManufacturers[i]]
+		if ratio > bestRatio:
+			bestRatio = ratio
+			bestPick = i
+	
+	return listOfPossibleManufacturers[bestPick]
+
+
+def parsePost(post, phoneDb):
 	# Takes as input a craigDb[i] post and a blank phone object, and the phone database
 	# No output, but the phone field should be filled in with values
-	# e.g. phone['brand'], phone['device'] etc. should all be filled in
+	# e.g. phone['manufacturer'], phone['device'] etc. should all be filled in
+
+	phone = dict()
 
 	# Initial Values
-	phone['brand'] = "Unknown"
+	phone['manufacturer'] = "Unknown"
 	phone['device'] = "Unknown"
 	phone['unlocked'] = False
 	phone['refurbished'] = False
@@ -46,19 +71,55 @@ def parsePost(post, phone, phoneDb):
 	phone['description'] = "UNDEFINED"
 	phone['price'] = -1
 
-	# First lets get device and brand
-	topBrand = "Unknown"
+	# First lets get device and manufacturer
+	topManufacturer = "Unknown"
 	topDevice = "Unknown"
-	currBest = -1
-	for brand in phoneDb.iterkeys():
-		for device in phoneDb[brand]:
-			for word in post['title'].split():
-				thisRatio = Levenshtein.ratio(str(word), str(device))
-				if thisRatio > currBest:
-					currBest = thisRatio
-					topBrand = brand
+	manufacturerRatios = dict() # We keep track of the ratio for each manufacturer, incase we detect an invalid one
+	currManuBest = -1
+	currDeviBest = -1
+	for thisPhone in phoneDb:
+		manufacturer = thisPhone['manufacturer']
+		device = thisPhone['device']
+		#print "(" + manufacturer + ") " + device
+		# Find the closest Manufacturer, if exists
+		# Search the title n words at a time, where n is length of manufacturer
+		numOfWordsInManu = len(manufacturer.split(" "))
+		splitTitle = post['title'].split()
+		try: # We will run out of words since we access i + len(manufacturer)
+			for i in range(0, len(manufacturer)):
+				manuRatio = Levenshtein.ratio(str(" ".join(splitTitle[i:i+numOfWordsInManu])).lower(), str(manufacturer).lower())
+				manuRatio = manuRatio + ((numOfWordsInManu-1) * 0.0001) # We need to add a bonus for length so we give preference to longer matches
+				#print "Comparison: " + str(" ".join(splitTitle[i:i+numOfWordsInManu])).lower() + " vs. " + str(manufacturer).lower()
+				#print "Ratio: " + str(manuRatio)
+				if manuRatio > currManuBest:
+					currManuBest = manuRatio
+					topManufacturer = manufacturer
+				manufacturerRatios[manufacturer] = manuRatio
+		except:
+			pass # Finished searching title
+		
+		# Now lets find the closest device
+		# Same strategy as before
+		numOfWordsInDevi = len(device.split(" "))
+		try:
+			for i in range(0, len(device)):
+				deviRatio = Levenshtein.ratio(str(" ".join(splitTitle[i:i+numOfWordsInDevi])).lower(), str(device).lower())
+				deviRatio = deviRatio + ((numOfWordsInDevi-1) * 0.0001)
+				#print "Comparison: " + str(" ".join(splitTitle[i:i+numOfWordsInDevi])).lower() + " vs. " + str(device).lower()
+				#print "Ratio: " + str(deviRatio)
+				if deviRatio > currDeviBest:
+					currDeviBest = deviRatio
 					topDevice = device
-	phone['brand'] = topBrand
+		except:
+			pass
+	# At this point, we may have a match for manufacturer that doesn't match the device
+	# e.g. Samsung iPhone 4S
+	# We always give precedence to the device
+	copyOfDb = phoneDb.clone() # So cursor doesn't mess up
+	possibleManufacturers = getManufacturers(topDevice, copyOfDb)
+	if not(topManufacturer in possibleManufacturers):
+		topManufacturer = pickBestManufacturer(manufacturerRatios, possibleManufacturers)
+	phone['manufacturer'] = topManufacturer
 	phone['device'] = topDevice
 
 	#Unlocked?
@@ -75,3 +136,47 @@ def parsePost(post, phone, phoneDb):
 	
 	phone['description'] = post['desc']
 
+	print "Manufacturer: " + phone['manufacturer']
+	print "Device: " + phone['device']
+	print "Unlocked? " + str(phone['unlocked'])
+	print "Refurb? " + str(phone['refurbished'])
+	print "New? " + str(phone['new'])
+	print "---------"
+	print "Subject: " + post['title']
+	print phone['description']
+
+
+def main():
+	print "[Main] Welcome to the post parsing script!"
+
+	print "[Main] Loading JSON data from file...",
+	craigData = loadJSONData(CRAIGSLIST_SCRAPED_FILEPATH)
+	print "done."
+
+	print "[Main] Parsing JSON data...",
+	craigDb = getCraigDb(craigData)
+	print "done."
+
+	print "[Main] Connecting to database...",
+	phonesCollection = pymongo.MongoClient().phones_db.phones_collection
+	print "done."
+
+	print "[Main] Retrieving phone database...",
+	phoneDb = phonesCollection.find()
+	print "done."
+
+	print "[Main] There are " + str(phonesCollection.count()) + " phones in the database"
+
+	print "[Main] Beginning to parse posts"
+	i = 1
+	for post in craigDb:
+		copyOfDb = phoneDb.clone() # So the cursor doesn't mess up
+		print "Phone #" + str(i)
+		parsePost(post, copyOfDb)
+		print "\n"
+		i = i + 1
+	
+	print "[Main] Done script."
+
+if __name__ == "__main__":
+	main()
