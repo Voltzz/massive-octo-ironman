@@ -10,8 +10,6 @@
 	]
 '''
 
-
-
 from sklearn import linear_model
 import pylab as pl
 import numpy as np
@@ -59,4 +57,4 @@ def main():
 	outputValue = predictPrices(regr,inputVector)
 
 if __name__ == "__main__":
-	main()
+	main()	
