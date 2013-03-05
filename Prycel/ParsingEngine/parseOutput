@@ -1,0 +1,8 @@
+[Main] Welcome to the post parsing script!
+[Main] Loading JSON data from file... done.
+[Main] Parsing JSON data... done.
+[Main] Connecting to database... done.
+[Main] Retrieving phone database... done.
+[Main] There are 0 phones in the database
+[Main] Beginning to parse posts
+Phone #1
