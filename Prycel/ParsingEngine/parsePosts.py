@@ -163,6 +163,10 @@ def main():
 
 	print "[Main] Retrieving phone database...",
 	phoneDb = phonesCollection.find()
+	if len(phoneDb) == 0:
+		print "FAIL!"
+		print "The phone database is empty. Please initialize the database before using it."
+		exit()
 	print "done."
 
 	print "[Main] There are " + str(phonesCollection.count()) + " phones in the database"
