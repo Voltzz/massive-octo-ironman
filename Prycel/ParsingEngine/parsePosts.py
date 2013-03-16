@@ -11,6 +11,11 @@ APPL_ROOT=os.path.join(os.path.dirname(__file__), '..')
 CRAIGSLIST_SCRAPED_FILEPATH = os.path.join(APPL_ROOT,"data_sets","scraped","craigslist_TO_scraped.json")
 
 
+SPAM_KEYWORDS_LIST= ['case','cover','protector','jailbreak','cases','unlocking','fixing','repair','charger'
+			   ,'cable','bumper','repairs' ,'cutter','dock','sim','service','headset','sd card','battery'
+			   ,'keyboard', 'fix', 'holster']
+
+
 def getCraigDb(craigData):
 	# Takes as input the raw JSON file
 	# Output needs to be a list of dictionaries
@@ -71,12 +76,27 @@ def parsePost(post, phoneDb):
 	phone['description'] = "UNDEFINED"
 	phone['price'] = -1
 
+	if checkDiscard(post) == 'true':
+	
+		print "Manufacturer: " + phone['manufacturer']
+		print "Device: " + phone['device']
+		print "Unlocked? " + str(phone['unlocked'])
+		print "Refurb? " + str(phone['refurbished'])
+		print "New? " + str(phone['new'])
+		print "---------"
+		print "Subject: " + post['title']
+		print phone['description']		
+		return
+
+
 	# First lets get device and manufacturer
 	topManufacturer = "Unknown"
 	topDevice = "Unknown"
 	manufacturerRatios = dict() # We keep track of the ratio for each manufacturer, incase we detect an invalid one
 	currManuBest = -1
 	currDeviBest = -1
+
+
 	for thisPhone in phoneDb:
 		manufacturer = thisPhone['manufacturer']
 		device = thisPhone['device']
@@ -85,6 +105,7 @@ def parsePost(post, phoneDb):
 		# Search the title n words at a time, where n is length of manufacturer
 		numOfWordsInManu = len(manufacturer.split(" "))
 		splitTitle = post['title'].split()
+		
 		try: # We will run out of words since we access i + len(manufacturer)
 			for i in range(0, len(manufacturer)):
 				manuRatio = Levenshtein.ratio(str(" ".join(splitTitle[i:i+numOfWordsInManu])).lower(), str(manufacturer).lower())
@@ -146,6 +167,23 @@ def parsePost(post, phoneDb):
 	print phone['description']
 
 
+
+def checkDiscard(post):
+	#Takes as input craigDB post as input
+	#Checks if the post title is irrelevant
+	#Eg. 'iPhone,iPad jailbreak is here!' , 'Samsung Galaxy S3 leather hoster case'
+
+	postTitle = post['title'].lower()
+
+	discard  = 'false'
+	for word in SPAM_KEYWORDS_LIST:
+		if word in postTitle and '+' not in postTitle and 'with' not in postTitle:
+			discard = 'true'
+
+	return discard
+
+
+
 def main():
 	print "[Main] Welcome to the post parsing script!"
 
@@ -177,6 +215,8 @@ def main():
 		copyOfDb = phoneDb.clone() # So the cursor doesn't mess up
 		print "Phone #" + str(i)
 		parsePost(post, copyOfDb)
+		#titleChecker(post)
+		#testingFunction(post)
 		print "\n"
 		i = i + 1
 	
