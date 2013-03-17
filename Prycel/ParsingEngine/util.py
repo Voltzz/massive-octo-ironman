@@ -5,5 +5,3 @@ def loadJSONData(filepath):
 	jsonData = json.loads(jsonFile)
 
 	return jsonData
-
-
