@@ -56,5 +56,6 @@ def main():
 	inputVector = np.array([1,1,0])
 	outputValue = predictPrices(regr,inputVector)
 
+
 if __name__ == "__main__":
 	main()	
