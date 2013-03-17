@@ -9,7 +9,8 @@ class CraigslistSpider(CrawlSpider):
     start_urls = ['http://toronto.en.craigslist.ca/moa/']
 
     rules = (
-        Rule(SgmlLinkExtractor(allow=r'/tor/mob/\d+\.html'), callback='parse_item', follow=True),
+        Rule(SgmlLinkExtractor(allow=r'/.*/mob/\d+\.html'), callback='parse_item', follow=True),
+	Rule(SgmlLinkExtractor(allow=r'/moa/index.*\.html')),
     )
 
     def parse_item(self, response):
