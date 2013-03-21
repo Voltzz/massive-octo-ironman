@@ -76,6 +76,7 @@ def parsePost(post, phoneDb):
 	phone['description'] = "UNDEFINED"
 	phone['price'] = -1
 
+	#Early exit if post title is irrelevant
 	if checkDiscard(post) == 'true':
 	
 		print "Manufacturer: " + phone['manufacturer']
@@ -174,15 +175,12 @@ def checkDiscard(post):
 	#Eg. 'iPhone,iPad jailbreak is here!' , 'Samsung Galaxy S3 leather hoster case'
 
 	postTitle = post['title'].lower()
-
 	discard  = 'false'
 	for word in SPAM_KEYWORDS_LIST:
 		if word in postTitle and '+' not in postTitle and 'with' not in postTitle:
 			discard = 'true'
 
 	return discard
-
-
 
 def main():
 	print "[Main] Welcome to the post parsing script!"
@@ -215,8 +213,6 @@ def main():
 		copyOfDb = phoneDb.clone() # So the cursor doesn't mess up
 		print "Phone #" + str(i)
 		parsePost(post, copyOfDb)
-		#titleChecker(post)
-		#testingFunction(post)
 		print "\n"
 		i = i + 1
 	
