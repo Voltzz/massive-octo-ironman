@@ -3,6 +3,7 @@ import Levenshtein
 import unicodedata
 import os
 import pymongo
+import unittest
 from util import loadJSONData
 
 # TODO: Fix this latent bug...
@@ -79,15 +80,8 @@ def parsePost(post, phoneDb):
 	#Early exit if post title is irrelevant
 	if checkDiscard(post) == 'true':
 	
-		print "Manufacturer: " + phone['manufacturer']
-		print "Device: " + phone['device']
-		print "Unlocked? " + str(phone['unlocked'])
-		print "Refurb? " + str(phone['refurbished'])
-		print "New? " + str(phone['new'])
-		print "---------"
-		print "Subject: " + post['title']
-		print phone['description']		
-		return
+		phone['description'] = post['desc']
+		return phone  
 
 
 	# First lets get device and manufacturer
@@ -158,16 +152,11 @@ def parsePost(post, phoneDb):
 	
 	phone['description'] = post['desc']
 
-	print "Manufacturer: " + phone['manufacturer']
-	print "Device: " + phone['device']
-	print "Unlocked? " + str(phone['unlocked'])
-	print "Refurb? " + str(phone['refurbished'])
-	print "New? " + str(phone['new'])
-	print "---------"
-	print "Subject: " + post['title']
-	print phone['description']
+	return phone
 
 
+def parsePostsTester():
+	pass
 
 def checkDiscard(post):
 	#Takes as input craigDB post as input
@@ -212,7 +201,17 @@ def main():
 	for post in craigDb:
 		copyOfDb = phoneDb.clone() # So the cursor doesn't mess up
 		print "Phone #" + str(i)
-		parsePost(post, copyOfDb)
+		phone = parsePost(post, copyOfDb)
+		
+		print "Manufacturer: " + phone['manufacturer']
+		print "Device: " + phone['device']
+		print "Unlocked? " + str(phone['unlocked'])
+		print "Refurb? " + str(phone['refurbished'])
+		print "New? " + str(phone['new'])
+		print "---------"
+		print "Subject: " + post['title']
+		print phone['description']
+
 		print "\n"
 		i = i + 1
 	
