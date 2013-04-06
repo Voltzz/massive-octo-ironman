@@ -127,7 +127,8 @@ def main():
 
 	
 	for key in listByPhoneNames.keys():
-
+		#Creating trained data and pickling to store
+		#Each phone has it's own trained file
 		dataSet = listByPhoneNames[key]
 		X,y = createVectors(dataSet)
 		regr = generateLinearModel(X,y)
@@ -138,22 +139,6 @@ def main():
 		filename = 'TrainingData/'+str(keyName).lower()+'.pkl'
 		_ = joblib.dump(regr, filename, compress=9)
 
-
-	#dataSet = [{'new': 0, 'price': u'700', 'refurbished': 0, 'unlocked': 1}, {'new': 1, 'price': u'595', 'refurbished': 0, 'unlocked': 0}, {'new': 1, 'price': u'650', 'refurbished': 0, 'unlocked': 0}, {'new': 0, 'price': u'380', 'refurbished': 0, 'unlocked': 0}, {'new': 1, 'price': u'560', 'refurbished': 0, 'unlocked': 1}, {'new': 1, 'price': u'1', 'refurbished': 0, 'unlocked': 0}, {'new': 0, 'price': u'420', 'refurbished': 0, 'unlocked': 0}, {'new': 1, 'price': u'580', 'refurbished': 0, 'unlocked': 1}, {'new': 0, 'price': u'400', 'refurbished': 0, 'unlocked': 0}, {'new': 1, 'price': u'650', 'refurbished': 0, 'unlocked': 0}, {'new': 1, 'price': u'650', 'refurbished': 0, 'unlocked': 1}, {'new': 1, 'price': u'650', 'refurbished': 0, 'unlocked': 1}, {'new': 1, 'price': u'575', 'refurbished': 0, 'unlocked': 0}, {'new': 1, 'price': u'400', 'refurbished': 0, 'unlocked': 0}, {'new': 1, 'price': u'600', 'refurbished': 0, 'unlocked': 0}]
-	#X,y = X,y = createVectors(dataSet)
-	#regr = generateLinearModel(X,y)
-
-	#filename = 'trainedTest.pkl'
-	#_ = joblib.dump(regr, filename, compress=9)
-
-	#X,y = createVectors(dataSet)
-	#regr = generateLinearModel(X,y)
-
-	#filename = 'trained.pkl'
-	#_ = joblib.dump(regr, filename, compress=9)
-
-	#inputVector = np.array([1,1,0])
-	#outputValue = predictPrices(regr,inputVector)
 
 
 if __name__ == "__main__":

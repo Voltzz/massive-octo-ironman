@@ -30,16 +30,15 @@ def convertPostToVector(post):
 	return np.array(inputList)
 
 def main():
-	regr = joblib.load('TrainingData/appleiphone5.pkl')
+	#testing with apple iphone 4s
+	regr = joblib.load('TrainingData/appleiphone4s.pkl')
 
-
-	#Create fake post
-	#convertPostToVector(fakePost)
-
+	#Assumption for test purposes "Unlocked","Not Refurbushed","New"
+	#Change value inputVector array for other testing
 	inputVector = np.array([1,0,1])
 	outputValue = predictPrices(regr,inputVector)
 
-	print "Output Value",outputValue
+	print "Price of phone is",outputValue
 
 if __name__ == '__main__':
 	main()
