@@ -6,6 +6,7 @@ import pymongo
 import unittest
 import sys
 from util import loadJSONData
+import time
 
 # TODO: Fix this latent bug...
 APPL_ROOT=os.path.join(os.path.dirname(__file__), '..')
@@ -16,6 +17,9 @@ CRAIGSLIST_SCRAPED_FILEPATH = os.path.join(APPL_ROOT,"data_sets","scraped","crai
 SPAM_KEYWORDS_LIST= ['case','cover','protector','jailbreak','cases','unlocking','fixing','repair','charger'
 			   ,'cable','bumper','repairs' ,'cutter','dock','sim','service','headset','sd card','battery'
 			   ,'keyboard', 'fix', 'holster']
+
+#PROFILE
+timeList = list()
 
 
 def getCraigDb(craigData):
@@ -81,9 +85,13 @@ def cleanPosts(postDb):
 
 
 def parsePost(post, phoneDb):
+	global timeList
 	# Takes as input a craigDb[i] post, and the phone database
 	# Output is the dictionary
 	# e.g. phone['manufacturer'], phone['device'] etc. should all be filled in
+
+	#PROFILE
+	startTime = time.time()
 
 	phone = dict()
 
@@ -100,8 +108,7 @@ def parsePost(post, phoneDb):
 	if checkDiscard(post) == 'true':
 	
 		phone['description'] = post['desc']
-		return phone  
-
+		return phone
 
 	# First lets get device and manufacturer
 	topManufacturer = "Unknown"
@@ -110,8 +117,12 @@ def parsePost(post, phoneDb):
 	currManuBest = -1
 	currDeviBest = -1
 
-
+	#PROFILE
+	firstIteration = True
 	for thisPhone in phoneDb:
+		#PROFILE
+		if firstIteration:
+			beginTime = time.time()
 		manufacturer = thisPhone['manufacturer']
 		device = thisPhone['device']
 		#print "(" + manufacturer + ") " + device
@@ -122,31 +133,53 @@ def parsePost(post, phoneDb):
 		
 		try: # We will run out of words since we access i + len(manufacturer)
 			for i in range(0, len(manufacturer)):
-				manuRatio = Levenshtein.ratio(str(" ".join(splitTitle[i:i+numOfWordsInManu])).lower(), str(manufacturer).lower())
-				manuRatio = manuRatio + ((numOfWordsInManu-1) * 0.0001) # We need to add a bonus for length so we give preference to longer matches
-				#print "Comparison: " + str(" ".join(splitTitle[i:i+numOfWordsInManu])).lower() + " vs. " + str(manufacturer).lower()
-				#print "Ratio: " + str(manuRatio)
+				if splitTitle[i][0].lower() != manufacturer[0].lower():
+					# Quick hack to make it faster. Ignore word if first letter doesn't match
+					# Who the heck spells it as 'Pihone 5' or 'aGlaxy S3'
+					manuRatio = 0
+				else:
+					manuRatio = Levenshtein.ratio(str(" ".join(splitTitle[i:i+numOfWordsInManu])).lower(), str(manufacturer).lower())
+					manuRatio = manuRatio + ((numOfWordsInManu-1) * 0.0001) # We need to add a bonus for length so we give preference to longer matches
+					#print "Comparison: " + str(" ".join(splitTitle[i:i+numOfWordsInManu])).lower() + " vs. " + str(manufacturer).lower()
+					#print "Ratio: " + str(manuRatio)
 				if manuRatio > currManuBest:
 					currManuBest = manuRatio
 					topManufacturer = manufacturer
 				manufacturerRatios[manufacturer] = manuRatio
 		except:
 			pass # Finished searching title
+
+		#PROFILE
+		if firstIteration:
+			manuSearchTime = time.time()
+			manuSearchTimeDelta = manuSearchTime - beginTime
+			print "Time taken to check the manufacturer: " + str(manuSearchTimeDelta)
 		
 		# Now lets find the closest device
 		# Same strategy as before
 		numOfWordsInDevi = len(device.split(" "))
 		try:
 			for i in range(0, len(device)):
-				deviRatio = Levenshtein.ratio(str(" ".join(splitTitle[i:i+numOfWordsInDevi])).lower(), str(device).lower())
-				deviRatio = deviRatio + ((numOfWordsInDevi-1) * 0.0001)
-				#print "Comparison: " + str(" ".join(splitTitle[i:i+numOfWordsInDevi])).lower() + " vs. " + str(device).lower()
-				#print "Ratio: " + str(deviRatio)
+				if splitTitle[i][0].lower() != device[0].lower():
+					deviRatio = 0
+				else:
+					deviRatio = Levenshtein.ratio(str(" ".join(splitTitle[i:i+numOfWordsInDevi])).lower(), str(device).lower())
+					deviRatio = deviRatio + ((numOfWordsInDevi-1) * 0.0001)
+					#print "Comparison: " + str(" ".join(splitTitle[i:i+numOfWordsInDevi])).lower() + " vs. " + str(device).lower()
+					#print "Ratio: " + str(deviRatio)
 				if deviRatio > currDeviBest:
 					currDeviBest = deviRatio
 					topDevice = device
 		except:
 			pass
+
+		#PROFILE
+		if firstIteration:
+			deviSearchTime = time.time()
+			deviSearchTimeDelta = deviSearchTime - manuSearchTime
+			print "Time taken to check the device: " + str(deviSearchTimeDelta)
+			firstIteration = False
+
 	# At this point, we may have a match for manufacturer that doesn't match the device
 	# e.g. Samsung iPhone 4S
 	# We always give precedence to the device
@@ -178,10 +211,23 @@ def parsePost(post, phoneDb):
 		splitTitle = splitTitle[1].split()
 		splitTitle = splitTitle[0].split('$')
 		splitTitle = splitTitle[1]
+		priceString = "" # Some prices are "$300obo"
+		for x in range(0,len(splitTitle)):
+			if splitTitle[x] >= '0' and splitTitle[x] <= '9':
+				priceString = priceString + splitTitle[x]
+			else:
+				break
 
-		phone['price'] = splitTitle
+
+		phone['price'] = int(priceString)
 	except IndexError:
+		# If price is not given, or is invalid
 		pass
+
+	endTime = time.time()
+	totalTimeTaken = endTime - startTime
+
+	timeList.append(totalTimeTaken)
 
 	return phone
 
@@ -203,6 +249,7 @@ def checkDiscard(post):
 	return discard
 
 def main(args):
+	global timeList
 	print "[Main] Welcome to the post parsing script!"
 
 	wipeDatabase = False
@@ -254,20 +301,22 @@ def main(args):
 		print "Phone #" + str(i)
 		phone = parsePost(post, copyOfDb)
 		
-		print "Manufacturer: " + phone['manufacturer']
-		print "Device: " + phone['device']
-		print "Price: " + str(phone['price'])
-		print "Unlocked? " + str(phone['unlocked'])
-		print "Refurb? " + str(phone['refurbished'])
-		print "New? " + str(phone['new'])
-		print "---------"
 		print "Subject: " + post['title']
-		print phone['description']
 
 		postList.append(phone)
 
 		print "\n"
 		i = i + 1
+
+		if i > 100:
+			break
+	
+	#PROFILE
+	avgTime = sum(timeList)/len(timeList)
+
+	print "Average time taken: " + str(avgTime)
+
+	exit()
 
 	postList = cleanPosts(postList)
 	
