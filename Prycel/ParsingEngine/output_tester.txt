@@ -1,0 +1,91 @@
+Phone #1
+Manufacturer: HTC
+Device: Desire Z
+Unlocked? True
+Refurb? False
+New? False
+---------
+Subject: HTC Desire Z -- Android smartphone, unlocked, keyboard, ICS - $100 (Dufferin / St Clair)
+
+Phone #2
+Manufacturer: Unknown
+Device: Unknown
+Unlocked? False
+Refurb? False
+New? False
+---------
+Subject: Clearance Sale Computer Accessories - $10 (Toronto-Markham)
+
+Phone #3
+Manufacturer: Samsung
+Device: Unknown
+Unlocked? False
+Refurb? False
+New? True
+---------
+Subject: Android phone for sale (Samsung S3 & Note 2) - $475 (499 Bloor Street West)
+
+Phone #4
+Manufacturer: Unknown
+Device: Unknown
+Unlocked? False
+Refurb? False
+New? False
+---------
+Subject: SGP Snap-on Case for iPhone 5 & Screen Protector - $10 (Toronto-Markham)
+
+Phone #5
+Manufacturer: Unknown
+Device: Unknown
+Unlocked? False
+Refurb? False
+New? False
+---------
+Subject: Nokia Lumia 900 / 800 Case & Screen Protector - $10 (Toronto-markham)
+
+Phone #6
+Manufacturer: Unknown
+Device: Unknown
+Unlocked? False
+Refurb? False
+New? False
+---------
+Subject: LG L5 / L7 Case and Screen Protector - $10 (Toronto-Markham)
+
+Phone #7
+Manufacturer: Unknown
+Device: Unknown
+Unlocked? False
+Refurb? False
+New? False
+---------
+Subject: Samsung Galaxy Note Case & Protector Bundle - $30 (Toronto-Markham)
+
+Phone #8
+Manufacturer: Unknown
+Device: Unknown
+Unlocked? False
+Refurb? False
+New? False
+---------
+Subject: iPhone 4 / 4S Car Charger or Home Charger ....!!! - $10 (Toronto-Markham)
+
+Phone #9
+Manufacturer: Samsung
+Device: Galaxy S2
+Unlocked? True
+Refurb? False
+New? True
+---------
+Subject: Unlocked Samsung Galaxy S2 + Case + Screen Protector Mint Condition - $250 (Bloor and Dufferin)
+
+Phone #10
+Manufacturer: LG
+Device: Unknown
+Unlocked? False
+Refurb? False
+New? False
+---------
+Subject: LG flip phone for Chatr/Rogers - $35
+
+	
