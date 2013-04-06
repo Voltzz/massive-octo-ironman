@@ -4,6 +4,7 @@ import unicodedata
 import os
 import pymongo
 import unittest
+import sys
 from util import loadJSONData
 
 # TODO: Fix this latent bug...
@@ -60,10 +61,28 @@ def pickBestManufacturer(ratios, listOfPossibleManufacturers):
 	
 	return listOfPossibleManufacturers[bestPick]
 
+def cleanPosts(postDb):
+	hashTable = dict()
+
+	maxRange = len(postDb)
+
+	i = 0
+
+	while i < maxRange:
+		desc = postDb[i]['description']
+		if desc in hashTable.keys() or postDb[i]['price'] == - 1 or postDb[i]['device'] == "Unknown":
+			del postDb[i]
+			i = i - 1
+			maxRange = maxRange - 1
+		else:
+			hashTable[desc] = True
+		i = i + 1
+	return postDb
+
 
 def parsePost(post, phoneDb):
-	# Takes as input a craigDb[i] post and a blank phone object, and the phone database
-	# No output, but the phone field should be filled in with values
+	# Takes as input a craigDb[i] post, and the phone database
+	# Output is the dictionary
 	# e.g. phone['manufacturer'], phone['device'] etc. should all be filled in
 
 	phone = dict()
@@ -152,6 +171,18 @@ def parsePost(post, phoneDb):
 	
 	phone['description'] = post['desc']
 
+	# Price
+	try: # Not all posts have set price (OBO, etc.)
+		splitTitle = post['title'].split(' - ')
+		# We assume it to be "HI SELLING PHONE - $200"
+		splitTitle = splitTitle[1].split()
+		splitTitle = splitTitle[0].split('$')
+		splitTitle = splitTitle[1]
+
+		phone['price'] = splitTitle
+	except IndexError:
+		pass
+
 	return phone
 
 
@@ -171,8 +202,18 @@ def checkDiscard(post):
 
 	return discard
 
-def main():
+def main(args):
 	print "[Main] Welcome to the post parsing script!"
+
+	wipeDatabase = False
+
+	# Check flags
+	for arg in args[1:]:
+		if arg == "--fresh":
+			wipeDatabase = True
+			break
+		else:
+			print "[Main] WARNING: Option '"+arg+"' was unrecognized and has been ignored"
 
 	print "[Main] Loading JSON data from file...",
 	craigData = loadJSONData(CRAIGSLIST_SCRAPED_FILEPATH)
@@ -196,8 +237,18 @@ def main():
 
 	print "[Main] There are " + str(phonesCollection.count()) + " phones in the database"
 
+	print "[Main] Opening post collection database",
+	postsCollection = pymongo.MongoClient().posts_db.posts_collection
+	print "done."
+
+	if wipeDatabase:
+		print "[Main] Fresh flag was passed, wiping out database...",
+		postsCollection.remove()
+		print "done."
+
 	print "[Main] Beginning to parse posts"
 	i = 1
+	postList = list()
 	for post in craigDb:
 		copyOfDb = phoneDb.clone() # So the cursor doesn't mess up
 		print "Phone #" + str(i)
@@ -205,6 +256,7 @@ def main():
 		
 		print "Manufacturer: " + phone['manufacturer']
 		print "Device: " + phone['device']
+		print "Price: " + str(phone['price'])
 		print "Unlocked? " + str(phone['unlocked'])
 		print "Refurb? " + str(phone['refurbished'])
 		print "New? " + str(phone['new'])
@@ -212,10 +264,19 @@ def main():
 		print "Subject: " + post['title']
 		print phone['description']
 
+		postList.append(phone)
+
 		print "\n"
 		i = i + 1
+
+	postList = cleanPosts(postList)
+	
+	print "[Main] Writing collection to database...",
+	postsCollection.ensure_index( [("description",pymongo.ASCENDING)], unique=True)
+	postsCollection.insert(postList)
+	print "done."
 	
 	print "[Main] Done script."
 
 if __name__ == "__main__":
-	main()
+	main(sys.argv)
